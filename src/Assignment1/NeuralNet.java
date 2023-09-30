@@ -1,8 +1,4 @@
-package ece.CPEN502;
-
-import ece.CPEN502.Interface.NeuralNetInterface;
-
-public class NeuralNet implements NeuralNetInterface {
+public class NeuralNet implements ece.CPEN502.Interface.NeuralNetInterface {
     /** Initialization:
      * input : 2 , hidden : 4, output: 1
      * XOR training set
@@ -53,4 +49,7 @@ public class NeuralNet implements NeuralNetInterface {
     /**
      * Step 3 : Backward Propagation
      **/
+    public static void main(String[] args) {
+        // You can add a main method here for testing your neural network
+    }
 }
