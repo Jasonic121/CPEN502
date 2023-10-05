@@ -1,4 +1,4 @@
-package ece.CPEN502.Interface;
+package Assignment1;
 
 /**
  * This interface represents a neural network.

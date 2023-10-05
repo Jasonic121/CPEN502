@@ -1,4 +1,4 @@
-package ece.CPEN502.Interface;
+package Assignment1;
 
 import java.io.File;
 import java.io.IOException;
