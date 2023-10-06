@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="robocode" level="project" />
     <orderEntry type="library" name="jfreechart-1.0.19-demo" level="project" />
+    <orderEntry type="library" name="kryshchuk.maven.plugins.jfreechart.plugin" level="project" />
   </component>
 </module>
