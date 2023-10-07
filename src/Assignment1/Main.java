@@ -28,6 +28,7 @@ public class Main {
 
         // Create a PrintWriter to write to the CSV file
         try (PrintWriter writer = new PrintWriter(new FileWriter("src/Assignment1/script/graphing_data.csv"))) {
+            writer.println("Epoch,totalError");
 
             for (int epoch = 0; epoch < maxEpochs; epoch++) {
                 totalError = 0.0;
@@ -35,27 +36,34 @@ public class Main {
                 for (int i = 0; i < inputPatterns.length; i++) {
                     double[] input = inputPatterns[i];
                     double[] target = targetOutputs[i];
+//                    System.out.println();
+//                    System.out.println("Training.... targetOutput: "+ target[0]);
 
                     // Forward pass
                     double output = neuralNet.outputFor(input);
+//                    System.out.println("output: "+ output);
 
                     // Backpropagation and training
-                    double error = neuralNet.train(input, target[0]);
+                    neuralNet.train(input, target[0], output);
 
-                    totalError += error;
+                    // Sum the errors
+                    totalError += Math.pow(output - target[0], 2);
                 }
 
-                // Calculate the average error for this epoch
-                double averageError = totalError / inputPatterns.length;
+                // Calculate the average error for this epoch (RMS error)
+                totalError /= 2;
 
                 // Check if the training has reached the target error
-                if (averageError < targetError) {
+                if (totalError < targetError) {
                     System.out.println("Training completed in " + (epoch + 1) + " epochs.");
                     break;
                 }
-                System.out.println("Epoch:" + epoch + "  "+"averageError:" + averageError);
-                writer.print("Epoch: "); writer.println(epoch);
-                writer.print("averageError: "); writer.println(averageError);
+
+                // Printout for Epoch and averageError
+                System.out.println("Epoch:" + epoch + "  "+"totalError:" + totalError);
+                writer.print(epoch);
+                writer.print(",");
+                writer.println(totalError);
 
             }
 

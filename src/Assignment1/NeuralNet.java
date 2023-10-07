@@ -26,12 +26,13 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
     private double [][] weightHiddenToOutput; // The weights hidden-output
 
     private double [][] lastWeightChangeInputToHidden; // Used for momentum term
-    private double [] lastWeightChangeHiddenToOutput; // Used for momentum tern
+    private double [][] lastWeightChangeHiddenToOutput; // Used for momentum tern
 
     // neuron vector
     private double [] hiddenLayer;
     private double[] inputs;       // Input values
     private double[] outputs;
+
 
     // Constructor
     public NeuralNet(int numInput, int numHidden, int numOutput, double learningRate, double momentum) {
@@ -49,20 +50,25 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
         this.learningRate = learningRate;
         this.momentum = momentum;
 
+        // Initialize arrays for tracking previous weight changes
+        this.lastWeightChangeInputToHidden = new double[numInput + 1][numHidden];
+        this.lastWeightChangeHiddenToOutput = new double[numHidden + 1][numOutput];
+
         initializeWeights();
     }
 
-    // Implement the sigmoid activation function
+    // Implement the binary sigmoid activation function
     @Override
     public double sigmoid(double x) {
-        return 2.0 / (1.0 + Math.exp(-x)) - 1.0;
+        return 1.0 / (1.0 + Math.exp(-x));
     }
 
     // Implement the custom sigmoid activation function
     @Override
     public double customSigmoid(double x) {
-        // Modify this method as needed
-        return 0.0;
+        int a = -1;
+        int b = 1;
+        return (double)(b - a) / (1 + Math.exp(-x)) + a;
     }
     /**
      * Algorithm
@@ -111,33 +117,38 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
         }
 
         // Step 1: Compute activations of hidden layer neurons
+//        System.out.println("Hidden Layer Activations:");
         for (int j = 0; j < numHidden; j++) {
             double activation = 0.0;
             // Include bias input (last input element)
             for (int i = 0; i <= numInput; i++) {
                 if (i == numInput) {
                     // Bias input
-                    activation += bias * weightInputToHidden[i][j];
+                    activation += bias * weightInputToHidden[i][j]; // Bias also have weight
                 } else {
                     activation += X[i] * weightInputToHidden[i][j];
                 }
             }
             hiddenLayer[j] = sigmoid(activation);
+//            System.out.println("Hidden Neuron " + j + ": " + hiddenLayer[j]);
         }
 
         // Step 2: Compute activations of output layer neurons
+//        System.out.println("Output Layer Activations:");
         for (int k = 0; k < numOutput; k++) {
             double activation = 0.0;
             // Include bias input (last hidden layer element)
             for (int j = 0; j <= numHidden; j++) {
                 if (j == numHidden) {
                     // Bias input
-                    activation += bias * weightHiddenToOutput[j][k];
+                    activation += bias * weightHiddenToOutput[j][k]; // Bias also have weight
                 } else {
                     activation += hiddenLayer[j] * weightHiddenToOutput[j][k];
                 }
             }
             outputs[k] = sigmoid(activation);
+//            System.out.println("Output Neuron " + k + ": " + outputs[k]);
+
         }
 
         return outputs[0];
@@ -147,45 +158,53 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
      * Step 3 : Backward Propagation
      **/
     @Override
-    public double train(double[] X, double argValue) {
+    public void train(double[] X, double argValue, double fOutput) {
         // Implement the backpropagation training algorithm
         // Modify this method to update weights and return the error
         if (X.length != numInput) {
             throw new IllegalArgumentException("Input vector size does not match the number of input neurons.");
         }
 
-        // Step 1: Compute the network's output for the input
-        double predictedOutput = outputFor(X);
+        // Step 1: The predicted output for the forward propagation
+        double forwardOutput = fOutput;
 
         // Step 2: Calculate the error (the difference between predicted and target output)
-        double error = argValue - predictedOutput;
+        double error = argValue - forwardOutput; // Ci - yi
 
-        // Step 3: Compute the output layer deltas and update output layer weights
+        // Compute the output layer deltas and
+        double deltaK = error * forwardOutput * (1.0 - forwardOutput); // Assuming sigmoid activation
+
+        // Step 3: update output layer weights
+//        System.out.println("Hidden-to-Output Layer Weight Changes:");
         for (int k = 0; k < numOutput; k++) {
-            double deltaK = error * predictedOutput * (1.0 - predictedOutput); // Assuming sigmoid activation
-            for (int j = 0; j < numHidden; j++) {
-                double weightChange = learningRate * deltaK * hiddenLayer[j];
+            for (int j = 0; j <= numHidden; j++) {
+                double weightChange = learningRate * deltaK * (j == numHidden ? bias : hiddenLayer[j]); // rho  * delta * xi
+                weightChange += momentum * lastWeightChangeHiddenToOutput[j][k]; // alpha * delta w
                 weightHiddenToOutput[j][k] += weightChange;
+//                System.out.println("Weight Change (" + j + " -> " + k + "): " + weightChange);
+                lastWeightChangeHiddenToOutput[j][k] = weightChange; // Update the previous weight change
+
             }
         }
 
         // Step 4: Compute the hidden layer deltas and update hidden layer weights
+//        System.out.println("Input-to-Hidden Layer Weight Changes:");
         for (int j = 0; j < numHidden; j++) {
             double deltaJ = hiddenLayer[j] * (1.0 - hiddenLayer[j]);
             double sum = 0.0;
             for (int k = 0; k < numOutput; k++) {
-                sum += deltaJ * weightHiddenToOutput[j][k];
+                sum += deltaK * weightHiddenToOutput[j][k];
             }
             deltaJ *= sum;
 
             for (int i = 0; i <= numInput; i++) {
-                double weightChange = learningRate * deltaJ * (i == numInput ? bias : X[i]);
+                double weightChange = learningRate * deltaJ * (i == numInput ? bias : X[i]); // rho  * delta * xi
+                weightChange += momentum * lastWeightChangeInputToHidden[i][j]; // alpha * delta w
                 weightInputToHidden[i][j] += weightChange;
+//                System.out.println("Weight Change (" + i + " -> " + j + "): " + weightChange);
+                lastWeightChangeInputToHidden[i][j] = weightChange; // Update the previous weight change
             }
         }
-
-        // Step 5: Calculate and return the error (squared error)
-        return 0.5 * error * error;
     }
 
     // Implement the save method

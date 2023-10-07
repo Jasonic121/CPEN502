@@ -28,7 +28,7 @@ public interface CommonInterface {
      * @param argValue  The new value to learn.
      * @return The error in the output for that input.
      */
-    public double train(double[] X, double argValue);
+    public void train(double[] X, double argValue, double forwardOuput);
 
     /**
      * Write either a LUT or weights of a neural net to a file.
