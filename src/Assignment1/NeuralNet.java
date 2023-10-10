@@ -1,7 +1,9 @@
 package Assignment1;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
+
 
 public class NeuralNet implements NeuralNetInterface, CommonInterface   {
     /** Initialization:
@@ -33,9 +35,9 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
     private double[] inputs;       // Input values
     private double[] outputs;
 
-
+    private int datasetChoice;
     // Constructor
-    public NeuralNet(int numInput, int numHidden, int numOutput, double learningRate, double momentum) {
+    public NeuralNet(int numInput, int numHidden, int numOutput, double learningRate, double momentum, int datasetChoice) {
         this.numInput = numInput;
         this.numHidden = numHidden;
         this.numOutput = numOutput;
@@ -54,13 +56,19 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
         this.lastWeightChangeInputToHidden = new double[numInput + 1][numHidden];
         this.lastWeightChangeHiddenToOutput = new double[numHidden + 1][numOutput];
 
+        this.datasetChoice = datasetChoice;
+
         initializeWeights();
     }
 
     // Implement the binary sigmoid activation function
     @Override
     public double sigmoid(double x) {
-        return 1.0 / (1.0 + Math.exp(-x));
+        if (datasetChoice == 1) {
+            return 1.0 / (1.0 + Math.exp(-x));
+        } else {
+            return -1.0 + (2.0 / (1.0 + Math.exp(-x)));
+        }
     }
 
     // Implement the custom sigmoid activation function
@@ -170,11 +178,16 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
 
         // Step 2: Calculate the error (the difference between predicted and target output)
         double error = argValue - forwardOutput; // Ci - yi
+        double deltaK;
+        // Compute the output layer deltas
+        if (datasetChoice == 1) {
+            deltaK = error * forwardOutput * (1.0 - forwardOutput); // Assuming sigmoid activation
+        }
+        else {
+            deltaK = error * (0.5) * (1 - Math.pow(forwardOutput, 2));
+        }
 
-        // Compute the output layer deltas and
-        double deltaK = error * forwardOutput * (1.0 - forwardOutput); // Assuming sigmoid activation
-
-        // Step 3: update output layer weights
+        // Step 3: Update output layer weights
 //        System.out.println("Hidden-to-Output Layer Weight Changes:");
         for (int k = 0; k < numOutput; k++) {
             for (int j = 0; j <= numHidden; j++) {
@@ -189,8 +202,14 @@ public class NeuralNet implements NeuralNetInterface, CommonInterface   {
 
         // Step 4: Compute the hidden layer deltas and update hidden layer weights
 //        System.out.println("Input-to-Hidden Layer Weight Changes:");
+        double deltaJ;
         for (int j = 0; j < numHidden; j++) {
-            double deltaJ = hiddenLayer[j] * (1.0 - hiddenLayer[j]);
+            if (datasetChoice == 1){
+                deltaJ = hiddenLayer[j] * (1.0 - hiddenLayer[j]);
+            }
+            else {
+                deltaJ = (0.5) * (1 - Math.pow(hiddenLayer[j], 2));
+            }
             double sum = 0.0;
             for (int k = 0; k < numOutput; k++) {
                 sum += deltaK * weightHiddenToOutput[j][k];
