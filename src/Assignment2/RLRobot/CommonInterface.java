@@ -16,7 +16,7 @@ public interface CommonInterface {
 
     public double outputFor(double[] x);
     public void train(double[] x, double target) throws IOException;
-    public void save(File fileName);
+    public void save(File fileName) throws IOException;
     public void load(String FileName) throws IOException;
-    public void initialize();
+
 }
